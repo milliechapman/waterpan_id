@@ -63,10 +63,12 @@ ele_dry<-ele_df[(ele_df$month>5&ele_df$month<9),]
 
 # dry season recurse
 ele_dry<- ele_dry[,c(1,2,3,4)]
+write.table(ele_dry,"outputs/ele_dry_mvmt.csv",col.names=T,row.names=F,sep=",")
 dry_recurse<- getRecursions(ele_dry, 500)
 
 #wet season recurse
 ele_wet<- ele_wet[,c(1,2,3,4)]
+write.table(ele_wet,"outputs/ele_wet_mvmt.csv",col.names=T,row.names=F,sep=",")
 wet_recurse<- getRecursions(ele_wet, 500)
 
 #plot recursion (fix labels...)
@@ -111,3 +113,7 @@ points(water$X, water$Y, col= "blue", pch=20)
 write.table(ele_dryRt,"outputs/ele_dryRt.csv",col.names=T,row.names=F,sep=",")
 write.table(ele_wetRt,"outputs/ele_wetRt.csv",col.names=T,row.names=F,sep=",")
 
+# histogram of number of revisits by season 
+par(mfrow=c(2,1))
+hist(ele_dryR$revisits, breaks = 100, main = "Dry Season Revisits", xlab = "Revisits (radius = 500m)")
+hist(ele_wetR$revisits, breaks = 100, main = "Wet Season Revisits", xlab = "Revisits (radius = 500m)")
