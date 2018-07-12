@@ -1,6 +1,7 @@
 ## elephant water hole analysis
 # Khaudum NP 
-# Millie chapman 8 July 2018
+# Millie Chapman 8 July 2018
+# Edited by Millie Chapman & Will Oestreich 12 July 2018
 library(recurse)
 library(sp)
 library(rgdal)
@@ -27,6 +28,15 @@ LongLatToUTM<-function(x,y,zone){
 }
 utm<-LongLatToUTM(ele$Lon,ele$Lat,33)
 ele<-cbind(ele, utm)
+
+#function to convert  high recursion locations from utm to lat/lon (used later)
+UTMtoLongLat<-function(x,y,zone){
+  xy <- data.frame(ID = 1:length(x), X = x, Y = y)
+  coordinates(xy) <- c("X", "Y")
+  proj4string(xy) <- CRS("+proj=utm +zone=33 +datum=WGS84")  ## for example
+  res <- spTransform(xy, CRS(paste("+proj=longlat +zone=",zone," ellps=WGS84",sep='')))
+  return(as.data.frame(res))
+}
 
 # add water hole points
 water<- read.csv("khaudum_data/waterholes.csv")
@@ -101,69 +111,3 @@ points(water$X, water$Y, col= "blue", pch=20)
 write.table(ele_dryRt,"outputs/ele_dryRt.csv",col.names=T,row.names=F,sep=",")
 write.table(ele_wetRt,"outputs/ele_wetRt.csv",col.names=T,row.names=F,sep=",")
 
-#read in high recursion location csv's
-dry_loc<-read.csv("outputs/ele_dryRt.csv")
-wet_loc<-read.csv("outputs/ele_wetRt.csv")
-
-#convert  high recursion locations from utm to lat/lon and save as csv for earth engine
-UTMtoLongLat<-function(x,y,zone){
-  xy <- data.frame(ID = 1:length(x), X = x, Y = y)
-  coordinates(xy) <- c("X", "Y")
-  proj4string(xy) <- CRS("+proj=utm +zone=33 +datum=WGS84")  ## for example
-  res <- spTransform(xy, CRS(paste("+proj=longlat +zone=",zone," ellps=WGS84",sep='')))
-  return(as.data.frame(res))
-}
-dry_ll<-UTMtoLongLat(dry_loc$X,dry_loc$Y,33)
-wet_ll<-UTMtoLongLat(wet_loc$X,wet_loc$Y,33)
-dry_coords<-paste(dry_ll$Y, dry_ll$X, sep= " ")
-write.table(dry_coords,"outputs/ele_dryRt_ll.csv",col.names=T,row.names=F,sep=",")
-write.table(wet_ll,"outputs/ele_wetRt_ll.csv",col.names=T,row.names=F,sep=",")
-
-# histogram of number of revisits by season 
-par(mfrow=c(2,1))
-hist(ele_dryR$revisits, breaks = 100, main = "Dry Season Revisits", xlab = "Revisits (radius = 500m)")
-hist(ele_wetR$revisits, breaks = 100, main = "Wet Season Revisits", xlab = "Revisits (radius = 500m)")
-
-## natural pans 
-library(rgdal)
-library(gdalUtils)
-library(raster)
-
-pans<- readOGR("khaudum_data/khaudum_water/Khaudum_pans_pj.shp")
-ogrInfo("khaudum_data/khaudum_water/Khaudum_pans_pj.shp")
-plot(pans)
-plot(ele_wet$X, ele_wet$Y)
-plot(pans)
-centroid1<- as.data.frame(gCentroid(pans, byid=TRUE))
-
-centroid <- SpatialPointsDataFrame(gCentroid(pans, byid=TRUE), 
-                                      pans@data, match.ID=FALSE)
-
-plot(centroid)
-
-water_recurse<- getRecursionsAtLocations(ele_wet, centroid1, 200)
-plot(water_recurse, centroid1, col = "red", xlim=c(1040000, 1160000), ylim=c(-2200000, -2000000),
-     main = "Dry Recursion Points 200m")
-
-xy <- wet_loc[,c(1,2)]
-
-spdf <- SpatialPointsDataFrame(coords = xy, data = wet_loc,
-                               proj4string = CRS("+proj=utm +zone=33 +south +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0"))
-
-shapefile <- spTransform(pans, CRS("+proj=longlat +datum=WGS84")) #change CRS
-centroid1<- as.data.frame(gCentroid(shapefile, byid=TRUE))
-centroidUTM<-LongLatToUTM(centroid1$x, centroid1$y, 33)
-centroidUTM<-centroidUTM[,c(2,3)]
-water_recurse<- getRecursionsAtLocations(ele_wet, centroidUTM, 200)
-plot(water_recurse, centroidUTM)
-par(mfrow=c(1,1))
-
-plot(shapefile)
-points(wet_ll$X, wet_ll$Y, col = "red", pch=20)
-
-## S4 method for signature 'ANY'
-crs(ele_wet, asText= TRUE)
-pan_crs<-crs(pans)
-crs(ele_wet)<-pan_crs
-projection(pans, asText=TRUE)
-projection(x) <- value
