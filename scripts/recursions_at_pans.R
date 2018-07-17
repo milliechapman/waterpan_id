@@ -93,3 +93,26 @@ wet_ll<-UTMtoLongLat(wet_loc$X,wet_loc$Y,33)
 plot(pans_ll)
 points(wet_ll$X, wet_ll$Y, col = "red", pch=20)
 
+
+# natural pans 
+pans_utm <- spTransform(pans, CRS("+proj=utm +zone=33 +datum=WGS84")) #change CRS
+
+unique <- unique(pans_utm@data$PANS_ID)
+
+unique_df<- as.data.frame(unique)
+
+for (i in 1:length(unique)) {
+  tmp <- pans_utm[pans_utm$PANS_ID == unique[i], ]
+  tmp<-buffer(tmp, width = 1)
+  a2013<-getRecursionsInPolygon(ele_wet_2013[,1:4], tmp, verbose = FALSE)
+  unique_df$revisits2013[i] =  a2013$revisits 
+  a2014<-getRecursionsInPolygon(ele_wet_2014[,1:4], tmp, verbose = FALSE)
+  unique_df$revisits2014[i] =  a2014$revisits  
+  a2015<-getRecursionsInPolygon(ele_wet_2015[,1:4], tmp, verbose = FALSE)
+  unique_df$revisits2015[i] =  a2015$revisits  
+  centroid<- gCentroid(tmp)
+  unique_df$X[i]<-centroid@coords[1,1]
+  unique_df$Y[i]<-centroid@coords[1,2]
+}
+
+write.csv(unique_df, "outputs/pan_revisits_poly.csv")
