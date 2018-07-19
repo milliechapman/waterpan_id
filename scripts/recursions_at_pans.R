@@ -65,6 +65,25 @@ plot(water_recurse_2013, centroidUTM, xlim=c(1040000, 1160000), ylim=c(-2220000,
 plot(water_recurse_2014, centroidUTM, xlim=c(1040000, 1160000), ylim=c(-2220000, -2020000))
 plot(water_recurse_2015, centroidUTM, xlim=c(1040000, 1160000), ylim=c(-2220000, -2020000))
 
+# recursions at points (centroids of potential pan sites in UTM); dry season
+ele_dry<-read.csv("outputs/ele_dry_mvmt.csv")
+water_recurse_d<-getRecursionsAtLocations(ele_dry, centroidUTM_2, 200)
+par(mfrow=c(1,1))
+plot(water_recurse_d, centroidUTM_2)
+
+# recursions at points (dry season), but for each year
+ele_dry$Date<-as.Date(ele_dry$DateTime)
+ele_dry_2013<-ele_dry[(as.numeric(ele_dry$Date)>as.numeric(as.Date("2013-05-01"))&as.numeric(ele_dry$Date)<as.numeric(as.Date("2013-10-01"))),]
+water_recurse_2013_d<-getRecursionsAtLocations(ele_dry_2013[,c(1,2,3,4)], centroidUTM_2, 500)
+ele_dry_2014<-ele_dry[(as.numeric(ele_dry$Date)>as.numeric(as.Date("2014-05-01"))&as.numeric(ele_dry$Date)<as.numeric(as.Date("2014-10-01"))),]
+water_recurse_2014_d<-getRecursionsAtLocations(ele_dry_2014[,c(1,2,3,4)], centroidUTM_2, 500)
+ele_dry_2015<-ele_dry[(as.numeric(ele_dry$Date)>as.numeric(as.Date("2015-05-01"))&as.numeric(ele_dry$Date)<as.numeric(as.Date("2015-10-01"))),]
+water_recurse_2015_d<-getRecursionsAtLocations(ele_dry_2015[,c(1,2,3,4)], centroidUTM_2, 500)
+par(mfrow=c(2,2))
+plot(water_recurse_2013_d, centroidUTM, xlim=c(1040000, 1160000), ylim=c(-2220000, -2020000))
+plot(water_recurse_2014_d, centroidUTM, xlim=c(1040000, 1160000), ylim=c(-2220000, -2020000))
+plot(water_recurse_2015_d, centroidUTM, xlim=c(1040000, 1160000), ylim=c(-2220000, -2020000))
+
 # merge number of revisits with pan centroid locations and sort descending
 pan_revisit_2013 <- cbind(water_recurse_2013$revisits,centroidUTM_2)
 pan_revisit_2014 <- cbind(water_recurse_2014$revisits,centroidUTM_2)
@@ -104,15 +123,28 @@ unique_df<- as.data.frame(unique)
 for (i in 1:length(unique)) {
   tmp <- pans_utm[pans_utm$PANS_ID == unique[i], ]
   tmp<-buffer(tmp, width = 1)
+  #wet seasons
   a2013<-getRecursionsInPolygon(ele_wet_2013[,1:4], tmp, verbose = FALSE)
-  unique_df$revisits2013[i] =  a2013$revisits 
+  unique_df$revisits2013w[i] =  a2013$revisits 
   a2014<-getRecursionsInPolygon(ele_wet_2014[,1:4], tmp, verbose = FALSE)
-  unique_df$revisits2014[i] =  a2014$revisits  
+  unique_df$revisits2014w[i] =  a2014$revisits  
   a2015<-getRecursionsInPolygon(ele_wet_2015[,1:4], tmp, verbose = FALSE)
-  unique_df$revisits2015[i] =  a2015$revisits  
+  unique_df$revisits2015w[i] =  a2015$revisits  
+  # dry seasons
+  b2013<-getRecursionsInPolygon(ele_dry_2013[,1:4], tmp, verbose = FALSE)
+  unique_df$revisits2013d[i] =  b2013$revisits 
+  b2014<-getRecursionsInPolygon(ele_dry_2014[,1:4], tmp, verbose = FALSE)
+  unique_df$revisits2014d[i] =  b2014$revisits  
+  b2015<-getRecursionsInPolygon(ele_dry_2015[,1:4], tmp, verbose = FALSE)
+  unique_df$revisits2015d[i] =  b2015$revisits  
+  #plot
   centroid<- gCentroid(tmp)
   unique_df$X[i]<-centroid@coords[1,1]
   unique_df$Y[i]<-centroid@coords[1,2]
 }
+
+unique_df$diff2013<-unique_df$revisits2013w-unique_df$revisits2013d
+unique_df$diff2014<-unique_df$revisits2014w-unique_df$revisits2014d
+unique_df$diff2015<-unique_df$revisits2015w-unique_df$revisits2015d
 
 write.csv(unique_df, "outputs/pan_revisits_poly.csv")
