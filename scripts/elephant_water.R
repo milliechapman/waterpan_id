@@ -14,7 +14,7 @@ library(PBSmapping)
 rm(list = ls())
 
 # read in cleaned elephant data
-ele<- read.csv("khaudum_data/elephant/elephant_clean.csv")
+ele<- read.csv("khaudum_data/elephant/clean/elephant_clean_all.csv")
 #complete cases
 ele<- ele[complete.cases(ele), ]
 
