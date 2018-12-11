@@ -5,6 +5,20 @@
 
 library(tidyr)
 library(ggplot2)
+library(sp)
+library(rgdal)
+library(dplyr)
+library(lubridate)
+library(scales)
+library(fields)
+library(spam)
+library(PBSmapping)
+library(gdalUtils)
+library(raster)
+library(rgeos)
+library(ggplot2)
+library(gridExtra)
+
 rm(list = ls())
 # function to convert LL to UTM for recursion package
 LongLatToUTM<-function(x,y,zone){
@@ -224,6 +238,17 @@ p3<-ggplot(subset(pan_revisits, !is.na(diff2015)), aes(x=X, y=Y, color=diff2015)
   scale_color_gradient(low="blue", high="red", limits=c(0, 130))
 p3 + labs(x = "Easting", y = "Northing", colour = "Diff in revisits (wet - dry)") + 
   annotate("text", x=1085000, y=-2045000, label= "2015", size=6)
+
+##### 
+# Alternative Fig 4 for Surf 'n' Turf presentation (Oct 2018)
+pan_revisits$diff2014 <- ifelse(pan_revisits$diff2014 >50, 50, pan_revisits$diff2014)
+p2<-ggplot(subset(pan_revisits, !is.na(diff2014)), aes(x=X, y=Y, color=diff2014)) + 
+  geom_point(shape=19, size=4) + geom_point(data = centroidUTM_2, colour = "black",size=0.3) + 
+  scale_color_gradient(low="white", high="red", limits=c(0, 50))
+p2 + labs(x = "Easting", y = "Northing", colour = "Diff in revisits (wet - dry)") + 
+  theme(text = element_text(size = 14)) +
+  annotate("text", x=1070000, y=-2040000, label= "2014", size=6) +
+  geom_polygon(data = khaudum_np_utm, aes(x=X,y=Y), alpha=0.1, colour="black") 
 
 #####
 # Figure 5
